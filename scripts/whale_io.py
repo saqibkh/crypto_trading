@@ -81,7 +81,7 @@ class Whale_Alert():
 
         # Create a new file if the file doesn't already exists
         if os.path.isfile(logfile_path):
-            print("Master file already exists. Append to it")
+            #print("Master file already exists. Append to it")
             i_masterlist_ids = self.read_master_list_ids(logfile_path, 'id')
 
         else:

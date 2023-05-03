@@ -29,7 +29,6 @@ def main(argv):
     i_data = whale_io.Whale_Alert()
 
     # Step-2:
-    l_result = blockchain.Blockchain()
     x = 1
 
 
