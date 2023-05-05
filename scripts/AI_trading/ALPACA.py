@@ -151,7 +151,7 @@ class ALPACA:
         i_log_directory = i_base_directory + "crypto_trading" + "/" + "logs" + "/"
         i_csv_file_name = i_log_directory + i_crypto + '.csv'
         try:
-            data = yf.download(tickers=i_crypto, period='12mo', interval='1d')
+            data = yf.download(tickers=i_crypto, period='120mo', interval='1d')
             data.to_csv(i_csv_file_name)
         except Exception as e:
             print("Some error has occurred. Continue!!!!!")
