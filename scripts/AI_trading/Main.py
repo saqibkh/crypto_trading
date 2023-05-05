@@ -32,6 +32,8 @@ def main(argv):
     for crypto in i_crypto_list:
         # We only care about crypto value in USD. Thus ignore all USDT and BTC conversion coins
         if crypto.endswith('/USD'):
+            simlog.info("==================================================================================")
+            simlog.info("Starting to process crypto: " + str(crypto))
             crypto = crypto.replace('/', '-')
             # Step-2.0 If latest AI models doesn't exist for these coins, then start pulling historical data
               # Step-2.1: Create AI models and use that to calculate RMSE/sharpeRatio/nextDayPrice
@@ -41,6 +43,10 @@ def main(argv):
             # Step-3: If a BUY/SELL execute that trade
             if i_action != constants.CRYPTO_LEAVE:
                 i_alpaca_object.process_action(crypto, i_action)
+
+            simlog.info("Pause for 1 second")
+            time.sleep(1)
+            simlog.info("==================================================================================")
 
     x = 1
 

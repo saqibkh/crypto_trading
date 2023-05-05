@@ -51,8 +51,9 @@ class ALPACA:
         # So retry with yahoo finance
         try:
             try:
-                i_current_price = float(self.api.get_bars(i_crypto, TimeFrame.Hour, limit=1)[0].c)
-            except:
+                i_current_price = float(self.api.get_bars(i_crypto.replace('-','/'), TimeFrame.Hour, limit=1)[0].c)
+            except Exception as e:
+                self.simlog.warning(str(e))
                 tickerData = yf.Ticker(i_crypto)
                 i_current_price = tickerData.history(period='1d')['Close'][0]
         except IndexError as e:
@@ -81,6 +82,7 @@ class ALPACA:
                 self.simlog.info("We are going to BUY " + str(i_crypto))
                 l_result = self.api.submit_order(symbol=i_crypto.replace('-','/'), qty=i_qty,
                                                  side='buy', type='market', time_in_force='day')
+                x = 1
 
         # Sell all current quantity of this stock
         elif i_action == constants.CRYPTO_SELL:
@@ -88,6 +90,7 @@ class ALPACA:
                 self.simlog.info("We are going to SELL " + str(i_crypto))
                 l_result = self.api.submit_order(symbol=i_crypto.replace('-','/'), qty=i_current_quantity,
                                                  side='sell', type='market', time_in_force='day')
+                x = 1
         else:
             print("The following action is undefined: " + str(i_action))
             raise Exception
