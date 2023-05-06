@@ -1,0 +1,2 @@
+blockchain,symbol,id,transaction_type,hash,from_address,from_owner,from_owner_type,to_address,to_owner,to_owner_type,timestamp,amount,amount_usd
+ethereum,usdc,2012024449,transfer,a352131716a1413862d67d5308da7280385fb8783ebe662f0c26fbf0aad347e6,1111567e0954e74f6ba7c4732d534e75b81dc42e,unknown,unknown,88e6a0c2ddd26feeb64f039a2c41296fcb3f5640,unknown,unknown,1683339215,12659253,12765171
