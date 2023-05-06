@@ -158,7 +158,9 @@ class ALPACA:
             print(e)
 
         # Load the data back from the csv files
-        return pd.read_csv(i_csv_file_name)
+        df = pd.read_csv(i_csv_file_name)
+        df.drop(df.tail(1).index, inplace=True)
+        return df
 
 
     def getTicker(self, i_crypto):
