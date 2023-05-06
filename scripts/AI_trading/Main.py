@@ -7,6 +7,10 @@ import time
 import datetime
 
 
+import warnings
+warnings.filterwarnings("ignore")
+os.environ['TF_CPP_MIN_LOG_LEVEL'] = '3'
+
 # ---------Set sys.path for MAIN execution---------------------------------------
 full_path = os.path.abspath(os.path.dirname(sys.argv[0])).split('crypto_trading')[0]
 full_path += "crypto_trading"
