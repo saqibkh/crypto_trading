@@ -81,7 +81,7 @@ class ALPACA:
                 i_qty = float(100 / float(i_current_price))
                 self.simlog.info("We are going to BUY " + str(i_crypto))
                 l_result = self.api.submit_order(symbol=i_crypto.replace('-','/'), qty=i_qty,
-                                                 side='buy', type='market', time_in_force='day')
+                                                 side='buy', type='market', time_in_force='gtc')
                 x = 1
 
         # Sell all current quantity of this stock
@@ -89,7 +89,7 @@ class ALPACA:
             if i_current_quantity > 0:
                 self.simlog.info("We are going to SELL " + str(i_crypto))
                 l_result = self.api.submit_order(symbol=i_crypto.replace('-','/'), qty=i_current_quantity,
-                                                 side='sell', type='market', time_in_force='day')
+                                                 side='sell', type='market', time_in_force='gtc')
                 x = 1
         else:
             print("The following action is undefined: " + str(i_action))
