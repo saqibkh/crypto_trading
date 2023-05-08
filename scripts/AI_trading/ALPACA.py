@@ -68,7 +68,7 @@ class ALPACA:
         i_current_invested = float(0)  # Calculated by multiplying quantity with market_value
 
         for i in range(len(self.list_positions)):
-            if i_crypto.replace('-','/') == self.list_positions[i].symbol:
+            if i_crypto.replace('-','') == self.list_positions[i].symbol:
                 i_current_quantity = float(self.list_positions[i].qty)
                 self.simlog.info("Current quantity = " + str(i_current_quantity))
                 i_current_invested = float(self.list_positions[i].qty) * float(self.list_positions[i].current_price)
@@ -80,11 +80,10 @@ class ALPACA:
 
         elif i_action == constants.CRYPTO_BUY:
             if i_current_invested < 100:
-                i_qty = float(1 / float(i_current_price))
+                i_qty = float(1.2 / float(i_current_price))
                 self.simlog.info("We are going to BUY " + str(i_crypto))
                 l_result = self.api.submit_order(symbol=i_crypto.replace('-','/'), qty=i_qty,
                                                  side='buy', type='market', time_in_force='gtc')
-                x = 1
 
         # Sell all current quantity of this stock
         elif i_action == constants.CRYPTO_SELL:
@@ -92,7 +91,6 @@ class ALPACA:
                 self.simlog.info("We are going to SELL " + str(i_crypto))
                 l_result = self.api.submit_order(symbol=i_crypto.replace('-','/'), qty=i_current_quantity,
                                                  side='sell', type='market', time_in_force='gtc')
-                x = 1
         else:
             print("The following action is undefined: " + str(i_action))
             raise Exception
