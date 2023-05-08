@@ -80,7 +80,7 @@ class ALPACA:
 
         elif i_action == constants.CRYPTO_BUY:
             if i_current_invested < 100:
-                i_qty = float(10 / float(i_current_price))
+                i_qty = float(0.01 / float(i_current_price))
                 self.simlog.info("We are going to BUY " + str(i_crypto))
                 l_result = self.api.submit_order(symbol=i_crypto.replace('-','/'), qty=i_qty,
                                                  side='buy', type='market', time_in_force='gtc')
