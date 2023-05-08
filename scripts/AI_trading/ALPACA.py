@@ -70,9 +70,9 @@ class ALPACA:
         for i in range(len(self.list_positions)):
             if i_crypto == self.list_positions[i].symbol:
                 i_current_quantity = float(self.list_positions[i].qty)
-                self.simlog.debug("Current quantity = " + str(i_current_quantity))
+                self.simlog.info("Current quantity = " + str(i_current_quantity))
                 i_current_invested = float(self.list_positions[i].qty) * float(self.list_positions[i].current_price)
-                self.simlog.debug("Current invested = $" + str(i_current_invested))
+                self.simlog.info("Current invested = $" + str(i_current_invested))
 
         # No Action Needed at this time for the particular stock
         if i_action == constants.CRYPTO_LEAVE:
