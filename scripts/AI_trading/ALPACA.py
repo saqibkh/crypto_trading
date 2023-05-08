@@ -68,7 +68,7 @@ class ALPACA:
         i_current_invested = float(0)  # Calculated by multiplying quantity with market_value
 
         for i in range(len(self.list_positions)):
-            if i_crypto == self.list_positions[i].symbol:
+            if i_crypto.replace('-','/') == self.list_positions[i].symbol:
                 i_current_quantity = float(self.list_positions[i].qty)
                 self.simlog.info("Current quantity = " + str(i_current_quantity))
                 i_current_invested = float(self.list_positions[i].qty) * float(self.list_positions[i].current_price)
