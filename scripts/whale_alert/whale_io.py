@@ -48,7 +48,7 @@ class Whale_Alert():
         self.end_time = unixtime
         self.start_time = str(self.end_time - 60 * 60)  # retrieve data for last 60 minutes
 
-        self.min_values = str(10000000)  # Above 10 million dollars
+        self.min_values = str(1000000)  # Above 1 million dollars
 
         url = 'https://api.whale-alert.io/v1/transactions?api_key=' + self.whale_io_apikey + '&min_value=' + self.min_values + "&start=" + self.start_time
 

@@ -23,9 +23,11 @@ from sklearn.model_selection import GridSearchCV
 from sklearn.ensemble import RandomForestRegressor
 from sklearn.model_selection import train_test_split
 from keras import backend as K
-from keras.models import Sequential
-from keras.layers import Dense, Dropout, LSTM, Conv1D, MaxPooling1D, Flatten, GaussianNoise, Activation
+from keras.models import Sequential, Model
+from keras.layers import Dot, Input, Bidirectional, Dense, Dropout, LSTM, Conv1D, MaxPooling1D, Flatten, GaussianNoise, Activation
+from keras.optimizers import Adam
 from tensorflow.keras import regularizers
+from tensorflow.keras.callbacks import EarlyStopping
 
 class CRYPTO:
     def __init__(self, i_AI_model_name, i_values_list):
@@ -81,6 +83,11 @@ class ALPACA:
         elif i_action == constants.CRYPTO_BUY:
             if i_current_invested < 10:
                 i_qty = float(1.2 / float(i_current_price))
+
+                # Round down stock quantity if > 1
+                if i_qty > 1:
+                    i_qty = int(i_qty)
+
                 self.simlog.info("We are going to BUY " + str(i_crypto))
                 l_result = self.api.submit_order(symbol=i_crypto.replace('-','/'), qty=i_qty,
                                                  side='buy', type='market', time_in_force='gtc')
@@ -88,9 +95,19 @@ class ALPACA:
         # Sell all current quantity of this stock
         elif i_action == constants.CRYPTO_SELL:
             if i_current_quantity > 0:
-                self.simlog.info("We are going to SELL " + str(i_crypto))
-                l_result = self.api.submit_order(symbol=i_crypto.replace('-','/'), qty=i_current_quantity,
-                                                 side='sell', type='market', time_in_force='gtc')
+
+                # It is possible that we are looking at a loss on this trade.
+                # Thus hold onto the stock for a while and don't sell
+                for i in range(len(self.list_positions)):
+                    if self.list_positions[i].symbol == str(self.stock_name):
+                        if float(self.list_positions[i].unrealized_pl) >= 0:
+                            self.simlog.info("We are going to SELL " + str(i_crypto))
+                            l_result = self.api.submit_order(symbol=i_crypto.replace('-','/'), qty=i_current_quantity,
+                                                             side='sell', type='market', time_in_force='gtc')
+                        else:
+                            self.simlog.warning("It was recommended to sell " + str(i_crypto))
+                            self.simlog.warning("We are not selling because there is a loss of $" + str(self.list_positions[i].unrealized_pl))
+                            return
         else:
             print("The following action is undefined: " + str(i_action))
             raise Exception
@@ -132,6 +149,8 @@ class ALPACA:
             self.master_list.insert(-1, CRYPTO('ANN', self.ANN()))
             self.master_list.insert(-1, CRYPTO('CNN', self.CNN()))
             self.master_list.insert(-1, CRYPTO('Random Forrest', self.RandomForest()))
+            self.master_list.insert(-1, CRYPTO('Attention-based LSTM', self.AttLSTM()))
+            self.master_list.insert(-1, CRYPTO('BiDirectional LSTM', self.BiDirectionalLSTM()))
 
             with open(self.log_file, 'a') as file:
                 for i in range(len(self.master_list)):
@@ -204,17 +223,17 @@ class ALPACA:
             self.simlog.info("Percentage Change = " + str(i_percentage_change))
             if float(self.master_list[i]['RMSE']) < 5:
                 if i_percentage_change:
-                    if i_percentage_change > 10:
+                    if i_percentage_change > 20:
                         i_score_buy += 1
-                    elif i_percentage_change < 5:
+                    elif i_percentage_change < 10:
                         i_score_sell += 1
                     else:
                         continue
 
-        if i_score_sell >= 3:
+        if i_score_sell >= 5:
             self.simlog.info("The current action is to SELL")
             return constants.CRYPTO_SELL
-        elif i_score_buy >= 3:
+        elif i_score_buy >= 5:
             self.simlog.info("The current action is to BUY")
             return constants.CRYPTO_BUY
         else:
@@ -524,6 +543,138 @@ class ALPACA:
         next_day = model.predict(last_days, verbose=0)[0][0]
 
         return rmse, sharpe_ratio_predicted, next_day
+
+    def AttLSTM(self):
+        data = self.df.copy(deep=True)
+        prices = data['Close'].values.reshape(-1, 1)
+        scaler = MinMaxScaler(feature_range=(0, 1))
+        scaled_prices = scaler.fit_transform(prices)
+
+        # Split data into training and testing sets
+        train_size = int(len(scaled_prices) * 0.9)
+        train_data = scaled_prices[:train_size]
+        test_data = scaled_prices[train_size:]
+
+        # Define constants
+        window_size = 30  # Number of previous days' prices to consider for prediction
+        hidden_units = 32
+        output_size = 1
+        learning_rate = 0.001
+        epochs = 50
+        batch_size = 32
+
+        x_train, y_train = create_sequences(train_data, window_size)
+        x_test, y_test = create_sequences(test_data, window_size)
+
+        # Build the Attention-based LSTM model
+        input_seq = Input(shape=(window_size, 1))
+        lstm_out = LSTM(hidden_units, return_sequences=True)(input_seq)
+        attention_weights = Dense(1, activation='tanh')(lstm_out)
+        attention_weights = Activation('softmax')(attention_weights)
+        context = Dot(axes=1)([attention_weights, lstm_out])
+        context = Flatten()(context)
+        output = Dense(output_size)(context)
+        model = Model(inputs=input_seq, outputs=output)
+
+        # Compile the model
+        model.compile(optimizer=Adam(learning_rate), loss='mean_squared_error')
+
+        # Train the model
+        model.fit(x_train, y_train, epochs=epochs, batch_size=batch_size, verbose=0)
+
+        # Make predictions on the test set
+        predictions = model.predict(x_test)
+        predictions = scaler.inverse_transform(predictions)
+        y_test = scaler.inverse_transform(y_test)
+
+        # Calculate RMSE
+        rmse = np.sqrt(mean_squared_error(y_test, predictions))
+
+        # Calculate Sharpe ratio (assuming daily returns)
+        daily_returns = (y_test[1:] - y_test[:-1]) / y_test[:-1]
+        sharpe_ratio = np.mean(daily_returns) / np.std(daily_returns)
+
+        # Predict the next days price
+        # Create a copy of df to prevent overwrite
+        df = self.df.copy(deep=True)
+        last_days = df.tail(window_size)
+        last_days = scaler.fit_transform(last_days.filter(['Close']).values.reshape(-1,1))
+
+        last_days = np.reshape(last_days, (1, last_days.shape[0], 1))
+        next_day = model.predict(last_days, verbose=0)
+        next_day = scaler.inverse_transform(next_day)[0][0]
+
+        return [rmse, sharpe_ratio, next_day]
+
+    def BiDirectionalLSTM(self):
+
+        # `look_back` is the number of previous time steps to use as input to the LSTM network
+        # (e.g. 1 for using only the previous day's price)
+        look_back = 30
+
+        # Create a copy of df to prevent overwrite
+        dataset = self.df.copy(deep=True)
+
+        # Normalize the data
+        dataset = dataset.filter(['Close']).values
+        scaler = MinMaxScaler(feature_range=(0, 1))
+        dataset = scaler.fit_transform(dataset)
+
+        # Split into training and testing sets
+        train_size = int(len(dataset) * 0.9)
+        train, test = dataset[0:train_size, :], dataset[train_size:len(dataset), :]
+
+        trainX, trainY = create_dataset_LSTM(train, look_back)
+        testX, testY = create_dataset_LSTM(test, look_back)
+
+        # Reshape data for LSTM input (samples, time steps, features)
+        trainX = np.reshape(trainX, (trainX.shape[0], 1, trainX.shape[1]))
+        testX = np.reshape(testX, (testX.shape[0], 1, testX.shape[1]))
+
+        # Create the Deep Belief Network model
+        model = Sequential()
+        model.add(Bidirectional(LSTM(128), input_shape=(1, look_back)))
+        model.add(Dense(1))
+        model.compile(loss='mean_squared_error', optimizer='adam')
+
+        # Train the model
+        model.fit(trainX, trainY, epochs=100, batch_size=32, verbose=0)
+
+        # Make predictions on testing set
+        testPredict = model.predict(testX, verbose=0)
+        testPredict = scaler.inverse_transform(testPredict)
+        testY = scaler.inverse_transform([testY])
+
+        # Calculate root mean squared error
+        rmse = np.sqrt(mean_squared_error(testY[0], testPredict[:, 0]))
+
+        df_predicted = pd.DataFrame(testPredict)
+        mean_return = df_predicted.pct_change().mean()[0]
+        volatility = df_predicted.pct_change().std()[0]
+        sharpe_ratio_predicted = (mean_return / volatility)
+
+        # Predict the next days price
+        # Create a copy of df to prevent overwrite
+        df = self.df.copy(deep=True)
+        last_days = df.tail(look_back)
+        last_days = scaler.fit_transform(last_days.filter(['Close']).values)
+        last_days = np.reshape(last_days, (1, 1, last_days.shape[0]))
+        next_day = model.predict(last_days, verbose=0)
+        next_day = scaler.inverse_transform(next_day)[0][0]
+
+        return [rmse, sharpe_ratio_predicted, next_day]
+
+
+# Create input sequences and target values
+def create_sequences(data, window_size):
+    x = []
+    y = []
+    for i in range(len(data) - window_size - 1):
+        x.append(data[i : i + window_size])
+        y.append(data[i + window_size])
+    return np.array(x), np.array(y)
+
+
 
 # Reshape data for LSTM input
 def create_dataset_LSTM(dataset, look_back=1):
