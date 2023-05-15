@@ -70,14 +70,14 @@ class Whale_Alert():
             if l_result == constants.PASS:
                 self.transactions.append(TRANSACTION(transaction))
 
-        self.check_row_width()
+        #self.check_row_width()
 
     def check_row_width(self):
         updated_rows = []
         log_master_filename = os.path.abspath(os.path.dirname(sys.argv[0])).split('crypto_trading')[0] + \
                        "crypto_trading/logs/" + "MasterList.csv"
 
-        with open(log_master_filename, 'r') as file:
+        with open(log_master_filename, 'a') as file:
             reader = csv.reader(file)
             rows = list(reader)
 
