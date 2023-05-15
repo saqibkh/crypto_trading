@@ -69,7 +69,6 @@ class Whale_Alert():
             if l_result == constants.PASS:
                 self.transactions.append(TRANSACTION(transaction))
 
-
     def add_to_master_list(self, transaction):
 
         # This list holds all the transaction ids in the masterlist, so as not to repeat the same entry twice
@@ -87,10 +86,15 @@ class Whale_Alert():
         else:
             # If the file doesn't exist, create it and append to it
             with open(logfile_path, 'a') as file:
-                file.write("blockchain,symbol,id,transaction_type,hash,from_address,from_owner,from_owner_type,to_address,to_owner,to_owner_type,timestamp,amount,amount_usd\n")
+                file.write("date,blockchain,symbol,id,transaction_type,hash,from_address,from_owner,from_owner_type,to_address,to_owner,to_owner_type,timestamp,amount,amount_usd\n")
 
         if transaction['id'] not in i_masterlist_ids:
             with open(logfile_path, 'a') as file:
+                i_timestamp = int(transaction['timestamp'])
+                # Convert the timestamp to a datetime object
+                date_string = str(datetime.fromtimestamp(i_timestamp)) #2023-05-15 10:58:00
+
+                file.write(str(date_string)+',')
                 file.write(str(transaction['blockchain'])+',')
                 file.write(str(transaction['symbol']) + ',')
                 file.write(str(transaction['id']) + ',')
