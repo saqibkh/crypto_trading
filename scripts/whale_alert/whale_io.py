@@ -70,30 +70,6 @@ class Whale_Alert():
             if l_result == constants.PASS:
                 self.transactions.append(TRANSACTION(transaction))
 
-        #self.check_row_width()
-
-    def check_row_width(self):
-        updated_rows = []
-        log_master_filename = os.path.abspath(os.path.dirname(sys.argv[0])).split('crypto_trading')[0] + \
-                       "crypto_trading/logs/" + "MasterList.csv"
-
-        with open(log_master_filename, 'a') as file:
-            reader = csv.reader(file)
-            rows = list(reader)
-
-            # Find the maximum number of elements in a row
-            max_row_length = max(len(row) for row in rows)
-
-            # Update each row to have equal number of elements
-            for row in rows:
-                updated_row = list(zip_longest(row, fillvalue=''))
-                updated_rows.append(updated_row)
-
-        # Write the updated rows back to the CSV file
-        with open(log_master_filename, 'w', newline='') as file:
-            writer = csv.writer(file)
-            writer.writerows(updated_rows)
-
     def add_to_master_list(self, transaction):
 
         # This list holds all the transaction ids in the masterlist, so as not to repeat the same entry twice
