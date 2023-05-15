@@ -58,13 +58,14 @@ class Whale_Alert():
         self.whale_data_raw = requests.get(url).json()
 
         # Extract just the transaction data.
-        try:
-            transactions = self.whale_data_raw['transactions']
-        except Exception as e:
-            # Sometimes it gives an error for God knows what reason.
-            # So just retry and it usually works
-            time.sleep(random.randint(1, 10))
-            transactions = self.whale_data_raw['transactions']
+        i_retry = 0
+        transactions = None
+        while (transactions == None) and (i_retry < 10):
+            try:
+                transactions = self.whale_data_raw['transactions']
+            except Exception as e:
+                i_retry += 1
+                time.sleep(random.randint(1, 10))
 
         for transaction in transactions:
             l_result = self.add_to_master_list(transaction)
