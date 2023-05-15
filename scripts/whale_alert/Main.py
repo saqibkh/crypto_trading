@@ -22,11 +22,15 @@ for root, dirs, files in os.walk(full_path):
 import whale_io
 import constants
 import blockchain
+import sim_logging
 
 def main(argv):
+    i_log_directory = os.path.abspath(os.path.dirname(sys.argv[0])).split('crypto_trading')[0]
+    i_log_directory += "crypto_trading/logs/"
+    simlog = sim_logging.SIMLOG(log_dir=i_log_directory)
 
     # Step-1: Get whales transaction data from https://api.whales-alert-io
-    i_data = whale_io.Whale_Alert()
+    i_data = whale_io.Whale_Alert(simlog)
 
     # Step-2:
     x = 1

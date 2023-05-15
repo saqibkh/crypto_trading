@@ -9,6 +9,7 @@ import requests
 import json
 import random
 import constants
+import sim_logging
 from datetime import datetime
 from itertools import zip_longest
 
@@ -39,8 +40,9 @@ class TRANSACTION:
         self.amount_usd = i_transaction_data['amount_usd']
 
 class Whale_Alert():
-    def __init__(self):
+    def __init__(self, i_simlog):
 
+        self.simlog = i_simlog
         # Create an empty array to fill with transactions later on
         self.transactions = []
 
@@ -64,6 +66,7 @@ class Whale_Alert():
             try:
                 transactions = self.whale_data_raw['transactions']
             except Exception as e:
+                self.simlog.warning("Failed to pull transaction details. Retry #" + str(i_retry))
                 i_retry += 1
                 time.sleep(random.randint(1, 10))
 
