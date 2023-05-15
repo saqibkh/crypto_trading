@@ -7,6 +7,7 @@ import time
 import calendar
 import requests
 import json
+import random
 import constants
 from datetime import datetime
 from itertools import zip_longest
@@ -62,7 +63,7 @@ class Whale_Alert():
         except Exception as e:
             # Sometimes it gives an error for God knows what reason.
             # So just retry and it usually works
-            time.sleep(4)
+            time.sleep(random.randint(1, 10))
             transactions = self.whale_data_raw['transactions']
 
         for transaction in transactions:
