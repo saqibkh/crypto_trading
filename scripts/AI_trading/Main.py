@@ -24,13 +24,44 @@ import ALPACA
 import constants
 import sim_logging
 
+class Key:
+    def __init__(self, i_key, i_secret_key, i_url):
+        self.key = i_key
+        self.secretKey = i_secret_key
+        self.url = i_url
+
+def usage():
+    print("Usage: Provide a path to the key file.")
+    print("Example: python3 scripts/AI_trading/Main.py -key /home/saqib/.ssh/alpaca_paper_keys")
+
 def main(argv):
+    i_keys = None
+
+    for i in range(len(argv)):
+        if argv[i] == '-key':
+            i_alpaca_key_file = argv[i+1]
+            with open(i_alpaca_key_file, 'r') as file:
+                for line in file:
+                    if line.startswith('Key:'):
+                        i_key = line.split(':')
+                    elif line.startswith('Secret_Key:'):
+                        i_secretkey = line.split(':')
+                    elif line.startswith('URL:'):
+                        i_url = line.split(':', 1)
+            i_keys = Key(i_key, i_secretkey, i_url)
+
+    # It is required to provide key. Otherwise we can't buy/sell
+    if i_keys is None:
+        usage()
+        exit(-1)
+    
+
     i_log_directory = os.path.abspath(os.path.dirname(sys.argv[0])).split('crypto_trading')[0]
     i_log_directory += "crypto_trading/logs/"
     simlog = sim_logging.SIMLOG(log_dir=i_log_directory)
 
     # Step-1: Get data for all crypto currencies
-    i_alpaca_object = ALPACA.ALPACA(simlog)
+    i_alpaca_object = ALPACA.ALPACA(i_keys, simlog)
     i_crypto_list = i_alpaca_object.get_all_crypto_currencies()
 
     for crypto in i_crypto_list:

@@ -38,10 +38,12 @@ class CRYPTO:
         self.percentage_change = None
 
 class ALPACA:
-    def __init__(self, i_simlog):
+    def __init__(self, i_keys, i_simlog):
         self.simlog = i_simlog
-        self.api = tradeapi.REST('PKCSBUUOKJN32C5LN716', 'aR9GddDWEcfgRHXUPOUtP6X7YI46JNOJsDUaFUBl',
-                                  base_url='https://paper-api.alpaca.markets')
+        self.api = tradeapi.REST(i_keys.key[-1].strip(), i_keys.secretKey[-1].strip(), 
+                base_url=i_keys.url[-1].strip())
+        #self.api = tradeapi.REST('PKCSBUUOKJN32C5LN716', 'aR9GddDWEcfgRHXUPOUtP6X7YI46JNOJsDUaFUBl',
+        #                          base_url='https://paper-api.alpaca.markets')
         self.list_positions = self.api.list_positions()
         self.log_file = self.processLogFile()
         self.data = None
