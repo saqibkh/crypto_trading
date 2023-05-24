@@ -37,6 +37,7 @@ def usage():
 
 def process_crypto(simlog, i_alpaca_object, i_crypto):
     if i_crypto.endswith('/USD'):
+        simlog.info("=====================================================================================")
         simlog.info("Starting to process crypto: " + str(i_crypto))
         i_crypto = i_crypto.replace('/', '-')
 
@@ -49,6 +50,8 @@ def process_crypto(simlog, i_alpaca_object, i_crypto):
         # Step-3: If a BUY/SELL execute that trade
         if i_action != constants.CRYPTO_LEAVE:
             i_alpaca_object.process_action(crypto, i_action)
+
+        simlog.info("=====================================================================================")
 
 def main(argv):
     i_keys = None
